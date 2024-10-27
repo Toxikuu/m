@@ -14,7 +14,7 @@ macro_rules! die {
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 3 {
-        die!("usage: m <src> <src2> ... <dst>\n\nWARNING\nm is NOT safe\nuse it with great care\nif you fuck up backups are made in /tmp/m");
+        die!("usage: mo <src> <src2> ... <dst>\n\nWARNING\nmo is NOT safe\nuse it with great care\nif you fuck up backups are made in /tmp/m");
     }
 
     let d = Path::new(&args[args.len() - 1]);
