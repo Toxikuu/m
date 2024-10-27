@@ -1,6 +1,6 @@
 [package]
-name = "m"
-version = "0.2.2"
+name = "mo"
+version = "0.3.0"
 edition = "2021"
 
 [dependencies]

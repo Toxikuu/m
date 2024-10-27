@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "m"
-version = "0.2.2"
+name = "mo"
+version = "0.3.0"
