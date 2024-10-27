@@ -1,4 +1,5 @@
 use std::env;
+use std::ffi::OsStr;
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -12,34 +13,45 @@ macro_rules! die {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    if args.len() != 3 {
-        die!("usage: m <source> <destination>\n\nWARNING\nm is NOT safe\nuse it with great care\nif you fuck up backups are made in /tmp/m");
+    if args.len() < 3 {
+        die!("usage: m <src> <src2> ... <dst>\n\nWARNING\nm is NOT safe\nuse it with great care\nif you fuck up backups are made in /tmp/m");
     }
 
-    let src = &args[1];
-    let dst = &args[2];
+    let d = Path::new(&args[args.len() - 1]);
+    let ss = &args[1..args.len() - 1];
 
-    let s = Path::new(src);
-    let d = Path::new(dst);
-
-    if let Err(e) = mv(s, d) {
-        die!("failed to move {:?} to {:?}: {}", s, d, e);
+    for s_ in ss {
+        let s = Path::new(s_);
+        if let Err(e) = mv(s, d) {
+            die!("failed to move {:?} to {:?}: {}", s, d, e);
+        }
     }
 }
 
 fn backup(d: &Path) -> io::Result<()> {
+    match d.to_str() {
+        Some(".") | Some("..") => return Ok(()),
+        _ => {}
+    };
+
     let bak = Path::new("/tmp/m");
     if !bak.exists() {
         fs::create_dir_all(bak)?;
     }
 
-    let b = bak.join(d.file_name().unwrap());
+    let b = bak.join(d.file_name().unwrap_or_else(|| OsStr::new("backup")));
+
+    let metadata = fs::metadata(d)?;
+    if !metadata.is_file() && !metadata.is_dir() {
+        println!("not backing up special file: {:?}", d);
+        return Ok(());
+    }
 
     if b.exists() {
-        if d.is_dir() {
-            fs::remove_dir_all(d)?;
+        if b.is_dir() {
+            fs::remove_dir_all(&b)?;
         } else {
-            fs::remove_file(d)?;
+            fs::remove_file(&b)?;
         }
     }
 
@@ -49,7 +61,7 @@ fn backup(d: &Path) -> io::Result<()> {
 
 fn mv(s: &Path, d: &Path) -> io::Result<()> {
     if !s.exists() {
-        die!("source {:?} does not exist.", s);
+        die!("source {:?} does not exist", s);
     }
 
     if d.exists() {
@@ -61,6 +73,5 @@ fn mv(s: &Path, d: &Path) -> io::Result<()> {
 
     fs::rename(s, d)?;
     println!("{:?} -> {:?}", s, d);
-
     Ok(())
 }
